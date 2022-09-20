@@ -1,5 +1,3 @@
-#define USE_ARDUINO_INTERRUPTS true
-#define DEBUG true
 #include <LiquidCrystal_I2C.h>
 #include <PulseSensorPlayground.h>
 int pulsePin = 0;
@@ -10,23 +8,13 @@ int fadePin = 8;
 
 int fadeRate = 0;
 
-const int sensor = A1;
+const int sensor = 1;
 
 float tempc;
 
 float vout;
 PulseSensorPlayground pulseSensor;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
-
-volatile int BPM;
-
-int Signal;
-
-volatile int IBI = 600;
-
-volatile boolean QS = false;
-
-static boolean serialVisual = true;
 
 void setup() {
     pulseSensor.analogInput(pulsePin);
@@ -41,8 +29,6 @@ void setup() {
 
     Serial.begin(115200);
 
-    interruptSetup();
-
     pinMode(sensor, INPUT);
 
     Serial.begin(9600);
@@ -52,40 +38,32 @@ void setup() {
 
 void loop() {
 
-    QS = true;
-    if (QS == true)
 
-    {
+    fadeRate = 255;
 
+    serialOutputWhenBeatHappens();
 
-        fadeRate = 255;
+    vout = analogRead(sensor);
 
-        serialOutputWhenBeatHappens();
+    vout = (vout * 500) / 1023;
 
-        QS = false;
+    tempc = vout;
 
-        vout = analogRead(sensor);
+    Serial.print("in DegreeC=");
 
-        vout = (vout * 500) / 1023;
+    Serial.print("\t");
 
-        tempc = vout;
+    Serial.print(tempc);
 
-        Serial.print("in DegreeC=");
+    Serial.println();
 
-        Serial.print("\t");
+    lcd.setCursor(0, 1);
+    lcd.print("temp in c:");
 
-        Serial.print(tempc);
+    lcd.print(tempc);
 
-        Serial.println();
+    delay(2000);
 
-        lcd.setCursor(0,1);
-        lcd.print("temp in c:");
-
-        lcd.print(tempc);
-
-        delay(2000);
-
-    }
 
     ledFadeToBeat();
 
@@ -93,9 +71,7 @@ void loop() {
 
 }
 
-void ledFadeToBeat()
-
-{
+void ledFadeToBeat() {
 
     fadeRate -= 15;
 
@@ -105,56 +81,25 @@ void ledFadeToBeat()
 
 }
 
-void interruptSetup()
-
-{
 
 
-    int TCCR2A = 0x02;
 
-    int TCCR2B = 0x06;
-
-    int OCR2A = 0X7C;
-
-    int TIMSK2 = 0x02;
-
-    sei();
-
-}
-
-
-void serialOutputWhenBeatHappens()
-
-{
-    if (serialVisual == true && pulseSensor.sawStartOfBeat())
-
-    {
+void serialOutputWhenBeatHappens() {
+    if (pulseSensor.sawStartOfBeat()) {
 
 
         Serial.print("BPM: ");
-
-        Serial.println(pulseSensor.getBeatsPerMinute());
-        lcd.setCursor(0,0);
+        int bpm = pulseSensor.getBeatsPerMinute();
+        Serial.println(bpm);
+        lcd.setCursor(0, 0);
         lcd.clear();
 
         lcd.print("BPM: ");
 
-        lcd.print(BPM);
-    } else
-
-    {
+        lcd.print(bpm);
+    } else {
         Serial.println("no beats found");
 
     }
     delay(20);
-}
-
-void sendDataToSerial(char symbol, int data)
-
-{
-
-    Serial.print(symbol);
-
-    Serial.println(data);
-
 }
