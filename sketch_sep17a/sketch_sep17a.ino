@@ -143,10 +143,7 @@ void serialOutputWhenBeatHappens()
     } else
 
     {
-
-        sendDataToSerial('B', BPM);
-
-        sendDataToSerial('Q', IBI);
+        Serial.println("no beats found");
 
     }
     delay(20);
